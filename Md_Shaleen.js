@@ -506,4 +506,94 @@ document.addEventListener('DOMContentLoaded', () => {
             behavior: 'smooth'
         });
     };
+
+    // ----------------------------------------------------------------------
+    // 10. Developer Staging Portal & Resume Updater Dashboard
+    // ----------------------------------------------------------------------
+    const adminModal = document.getElementById('admin-portal-modal');
+    const dragZone = document.getElementById('resume-dragzone');
+    const fileInput = document.getElementById('resume-file-input');
+    const uploadStatus = document.getElementById('upload-status');
+
+    window.openAdminModal = function() {
+        adminModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeAdminModal = function() {
+        adminModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        uploadStatus.style.display = 'none'; // Reset status for next open
+    };
+
+    // Close admin modal on background click
+    adminModal.addEventListener('click', (e) => {
+        if (e.target === adminModal) {
+            closeAdminModal();
+        }
+    });
+
+    // Handle Drag Zone Clicks to Trigger File Explorer
+    dragZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag Over highlights
+    dragZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dragZone.style.borderColor = 'var(--color-teal)';
+        dragZone.style.background = 'rgba(0, 180, 216, 0.05)';
+    });
+
+    dragZone.addEventListener('dragleave', () => {
+        dragZone.style.borderColor = 'rgba(0, 180, 216, 0.3)';
+        dragZone.style.background = 'rgba(0,0,0,0.15)';
+    });
+
+    // Drop file handler
+    dragZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragZone.style.borderColor = 'rgba(0, 180, 216, 0.3)';
+        dragZone.style.background = 'rgba(0,0,0,0.15)';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type === 'application/pdf') {
+            stageResumeFile(files[0]);
+        } else {
+            alert('Please upload a valid PDF file.');
+        }
+    });
+
+    // File Selection handler
+    fileInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files.length > 0) {
+            stageResumeFile(files[0]);
+        }
+    });
+
+    // Function to stage the PDF file locally in browser session
+    function stageResumeFile(file) {
+        try {
+            // Read file and create local blob URL
+            const blobUrl = URL.createObjectURL(file);
+            
+            // Find all resume download links on the page and update their href!
+            const resumeLinks = document.querySelectorAll('a[download*="Resume"]');
+            resumeLinks.forEach(link => {
+                link.href = blobUrl;
+                // Update download attribute to match uploaded file name or keep it clean
+                link.setAttribute('download', file.name);
+            });
+            
+            // Visual feedback
+            uploadStatus.style.display = 'flex';
+            
+            // Log local upload verification in console
+            console.log(`Analyst Portal: New resume successfully staged locally! File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+        } catch (error) {
+            console.error('Failed to stage resume file locally:', error);
+            alert('Error staging resume file. Please try again.');
+        }
+    }
 });
